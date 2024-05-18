@@ -1,42 +1,48 @@
-
-#include <stdio.h>
 #include <mpi.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
-#define N 1000  // Tamanho do vetor
-
-int main(int argc, char *argv[]) {
-    int rank, size, i, count = 0, total_count = 0;
-    int a[N];
-    
-    // Inicializa o vetor com valores
-    for (i = 0; i < N; i++) {
-        a[i] = i;
-    }
-
+int main(int argc, char** argv) {
+    int n = 1000; 
+    int *a = (int*) malloc(n * sizeof(int));
+    int i, count = 0, total_count = 0, rank, size;
+    double start_time, end_time;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    // Divisão do trabalho
-    int chunk_size = N / size;
-    int start = rank * chunk_size;
-    int end = (rank == size - 1) ? N : start + chunk_size;
+    if (rank == 0) {
+        for (i = 0; i < n; i++) {
+            a[i] = rand() % 100;
+        }
+    }
 
-    // Contagem local
-    for (i = start; i < end; i++) {
+    MPI_Bcast(a, n, MPI_INT, 0, MPI_COMM_WORLD);
+
+    int local_n = n / size;
+    int local_start = rank * local_n;
+    int local_end = (rank + 1) * local_n;
+
+    start_time = MPI_Wtime();
+
+    for (i = local_start; i < local_end; i++) {
         if (a[i] % 2 == 0) {
             count++;
         }
     }
 
-    // Redução
     MPI_Reduce(&count, &total_count, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
+    end_time = MPI_Wtime();
+
     if (rank == 0) {
-        printf("Total de pares: %d\n", total_count);
+        printf("Total de números pares: %d\n", total_count);
+        printf("Tempo de execução com %d processos: %f segundos\n", size, end_time - start_time);
     }
 
     MPI_Finalize();
+    free(a);
     return 0;
 }
