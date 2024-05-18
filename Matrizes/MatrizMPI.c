@@ -5,7 +5,7 @@
 #define N 100
 
 int main(int argc, char** argv) {
-    double a[N][N], b[N][N], c[N][N];
+    double a[N][N], b[N][N], c[N][N], c_local[N][N];
     int i, j, k, rank, size;
 
     MPI_Init(&argc, &argv);
@@ -31,18 +31,19 @@ int main(int argc, char** argv) {
 
     for (i = local_start; i < local_end; i++) {
         for (j = 0; j < N; j++) {
+            c_local[i][j] = 0.0; 
             for (k = 0; k < N; k++) {
-                c[i][j] += a[i][k] * b[k][j];
+                c_local[i][j] += a[i][k] * b[k][j];
             }
         }
     }
 
-    MPI_Reduce(c, c, N*N, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce(c_local, c, N*N, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
     if (rank == 0) {
         printf("Multiplicação de matrizes concluída.\n");
     }
 
-
+    MPI_Finalize();
     return 0;
 }
