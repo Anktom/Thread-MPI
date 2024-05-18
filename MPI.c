@@ -7,7 +7,6 @@ int main(int argc, char** argv) {
     int n = 1000; 
     int *a = (int*) malloc(n * sizeof(int));
     int i, count = 0, total_count = 0, rank, size;
-    double start_time, end_time;
 
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -25,8 +24,6 @@ int main(int argc, char** argv) {
     int local_start = rank * local_n;
     int local_end = (rank + 1) * local_n;
 
-    start_time = MPI_Wtime();
-
     for (i = local_start; i < local_end; i++) {
         if (a[i] % 2 == 0) {
             count++;
@@ -35,14 +32,5 @@ int main(int argc, char** argv) {
 
     MPI_Reduce(&count, &total_count, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 
-    end_time = MPI_Wtime();
-
-    if (rank == 0) {
-        printf("Total de números pares: %d\n", total_count);
-        printf("Tempo de execução com %d processos: %f segundos\n", size, end_time - start_time);
-    }
-
-    MPI_Finalize();
-    free(a);
     return 0;
 }
